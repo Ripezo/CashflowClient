@@ -1,3 +1,29 @@
-body {
+@import url('https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900');
+
+html, body {
   background: transparent;
+  width: 100%;
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+}
+
+#cashflow {
+	display: block;
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
+#cashflow > header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 10px 15px;
+	border-bottom: 1px solid #ccc;
+	box-sizing: border-box;
 }

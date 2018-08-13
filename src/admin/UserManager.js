@@ -1,9 +1,9 @@
-var instance;
-var SocketManager 	= require('./SocketManager').getInstance();
-// var ProjectManager 	= require('./ProjectManager').getInstance();
-// var MD5 			= require('md5-js');
+let instance;
+let SocketManager 	= require('./SocketManager').getInstance();
+let MD5 			= require('md5-js');
+// let ProjectManager 	= require('./ProjectManager').getInstance();
 
-var UserManager = function()
+let UserManager = function()
 {
 	this.rememberUser = false;
 };
@@ -12,130 +12,304 @@ UserManager.prototype.addEventListeners = function()
 {
 	console.log('UserManager.addEventListeners();');
 	SocketManager.on('whois', this.onWhoIsHandler.bind(this));
-	//SocketManager.on('login', this.onLoginHandler.bind(this));
-	//SocketManager.on('register', this.onRegisterHandler.bind(this));
+	SocketManager.on('login', this.onLoginHandler.bind(this));
+	SocketManager.on('register', this.onRegisterHandler.bind(this));
 };
 
 UserManager.prototype.onWhoIsHandler = function(data)
 {
-	if(document.cookie)
+	console.log('UserManager.onWhoIsHandler();');
+
+	console.log(this.getCookie('token'));
+
+	if(this.getCookie('token'))
 	{
 		var cookieValues = document.cookie.replace(/(?:(?:^|.*;\s*)token\s*\=\s*([^;]*).*$)|^.*$/, "$1").split(':');
-		SocketManager.emit('login', { email : cookieValues[0], token : cookieValues[1] });
+		SocketManager.emit('user-login', {
+			email : cookieValues[0],
+			token : cookieValues[1]
+		});
 	}
 	else
 	{
-		this.addLoginForm();
+		this.addLoginOptions();
 	}
 };
 
-/*UserManager.prototype.addLoginForm = function()
+UserManager.prototype.getCookie = (name) => {
+    let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+};
+
+UserManager.prototype.setCookie = (name, value, days) => {
+    let d = new Date;
+    d.setTime(d.getTime() + 24*60*60*1000*days);
+    document.cookie = name + "=" + value + ";path=/;expires=" + d.toGMTString();
+};
+
+UserManager.prototype.addLoginOptions = function()
 {
-	if(this.form) this.form.remove();
-	this.form = $('<form />', { id: 'login-form' });
-	this.form.emailLabel = $('<label for="inputEmail" class="sr-only">Correo</label>').appendTo(this.form);
-	this.form.email = $('<input type="email" id="inputEmail" class="form-control" placeholder="Correo" required autofocus style="margin-bottom: -1px;border-bottom-right-radius: 0;border-bottom-left-radius: 0;">').appendTo(this.form);
-	this.form.passwordLabel = $('<label for="inputPassword" class="sr-only">Contraseña</label>').appendTo(this.form);
-	this.form.password = $('<input type="password" id="inputPassword" class="form-control" placeholder="Contraseña" required style="border-top-right-radius: 0;border-top-left-radius: 0;">').appendTo(this.form);
-	this.form.remember = $('<div class="checkbox"><label><input id="remember" type="checkbox" value="remember-me"> Remember me</label></div>').appendTo(this.form);
-	this.form.loginButton = $('<button class="btn btn-lg btn-primary btn-block" type="submit">Ingresar</button>').appendTo(this.form);
-	this.form.registerButton = $('<a id="showRegister" class="no-registered">¿Aún no estás registrado?</a>').appendTo(this.form);
-	$('#login').append(this.form);
+	let UserManager = this;
 
-	this.form.registerButton.on('click', function(event)
-	{
-		event.preventDefault();
-		this.addRegisterForm();
-	}.bind(this));
+	let $UserOptions = $('#cashflow .user-options');
+		$UserOptions.empty();
 
-	this.form.submit(function(event)
-	{
-		event.preventDefault();
+	let $loginButton = $('<button>', {
+			class: 'mui-btn mui-btn--primary mui-btn--raised',
+	        html: 'Sign In'
+		}).appendTo($UserOptions);
 
-		var correo 			= this.form.email.val();
-		var clave 			= this.form.password.val();
-		var token 			= MD5(correo + clave);
-
-		this.rememberUser = $('#remember').is(':checked');
-
-		SocketManager.emit('login',
-		{
-			email : correo,
-			token : token
+		$loginButton.on('click', (event) => {
+			event. preventDefault();
+			UserManager.addLoginForm();
 		});
-	}.bind(this));
 
-	this.form.fadeIn(300);
+	let $registerButton = $('<button>', {
+			class: 'mui-btn mui-btn--primary mui-btn--raised',
+	        html: 'Sign Up'
+		}).appendTo($UserOptions);
+
+		$registerButton.on('click', (event) => {
+			event. preventDefault();
+			UserManager.addRegisterForm();
+		});
+};
+
+UserManager.prototype.addLoginForm = function()
+{
+	let signInForm = $('<form>', {
+		id: 'login-form',
+		class: 'mui-form'
+	});
+
+	let $shadowBoxContainer = $('<div>', {
+		css: {
+			width: '300px',
+			background: 'white',
+			padding: '15px',
+			margin: '10% auto 0'
+		},
+		html: signInForm
+	});
+
+	let $shadowbox = mui.overlay('on', {
+		'keyboard': true,
+		'static': false,
+		'onclose': () => {
+			console.log('Close!');
+		}
+	}, $shadowBoxContainer.get(0));
+
+	$('<legend>', {
+		html: 'Email Address'
+	}).appendTo(signInForm);
+
+	let emailContainer = $('<div>', {
+		class: 'mui-textfield',
+		html: '<label>Required Text Field</label>'
+	}).appendTo(signInForm);
+
+	let userAccountInput = $('<input>', {
+		type: 'text',
+		name: 'email',
+		required: true
+	}).prependTo(emailContainer);
+
+	$('<legend>', {
+		html: 'Password'
+	}).appendTo(signInForm);
+
+	let passContainer = $('<div>', {
+		class: 'mui-textfield',
+		html: '<label>Required Text Field</label>'
+	}).appendTo(signInForm);
+
+	let userPasswordInput = $('<input>', {
+		type: 'password',
+		required: true
+	}).prependTo(passContainer);
+
+	let rememberContainer = $('<div>', {
+		class: 'mui-checkbox',
+		html: '<label>Remember me</label>'
+	}).appendTo(signInForm);
+
+	let rememberMe = $('<input>', {
+		type: 'checkbox',
+		value: ''
+	}).prependTo(rememberContainer);
+
+	let sendButton = $('<button>', {
+		type: 'submit',
+		class: 'mui-btn mui-btn--raised mui-btn--primary',
+		html: 'Join'
+	}).on('click', () => {
+		event.preventDefault();
+
+		let email 		= userAccountInput.val();
+		let password 	= userPasswordInput.val();
+		let remember 	= rememberMe.is(':checked');
+		let token 		= MD5(email + password);
+
+		SocketManager.emit('user-login', {
+			token : token,
+			remember : remember
+		});
+	}).appendTo(signInForm);
+
+	let cancelButton = $('<button>', {
+		type: 'button',
+		class: 'mui-btn mui-btn--raised',
+		html: "Cancel"
+	}).on('click', (event) => {
+		event.preventDefault();
+		mui.overlay('off');
+	}).appendTo(signInForm);
 };
 
 UserManager.prototype.addRegisterForm = function()
 {
-	if(this.form) this.form.remove();
-	this.form = $('<form />', { id: 'register-form' });
-	this.form.nicknameLabel = $('<label for="inputName" class="sr-only">Nombre</label>').appendTo(this.form);
-	this.form.nickname = $('<input type="text" id="inputName" class="form-control" placeholder="Nombre">').appendTo(this.form);
-	this.form.emailLabel = $('<label for="inputEmail" class="sr-only">Correo</label>').appendTo(this.form);
-	this.form.email = $('<input type="email" id="inputEmail" class="form-control" placeholder="Correo" required autocomplete="off" autofocus style="margin-bottom: -1px;border-bottom-right-radius: 0;border-bottom-left-radius: 0;">').appendTo(this.form);
-	this.form.passwordLabel = $('<label for="inputPassword" class="sr-only">Contraseña</label>').appendTo(this.form);
-	this.form.password = $('<input type="password" id="inputPassword" class="form-control" placeholder="Contraseña" required autocomplete="off" style="border-top-right-radius: 0;border-top-left-radius: 0;">').appendTo(this.form);
-	this.form.rePasswordLabel = $('<label for="inputRePassword" class="sr-only">Confirmar clave</label>').appendTo(this.form);
-	this.form.rePassword = $('<input type="password" id="inputRePassword" class="form-control" placeholder="Confirmar clave" required>').appendTo(this.form);
-	this.form.remember = $('<div class="checkbox"><label><input id="remember" type="checkbox" value="remember-me"> Remember me</label></div>').appendTo(this.form);
-	this.form.loginButton = $('<button class="btn btn-lg btn-primary btn-block" type="submit">Registrar</button>').appendTo(this.form);
-	this.form.registerButton = $('<a id="showRegister" class="registered">¿Ya estás registrado?</a>').appendTo(this.form);
-	$('#login').append(this.form);
+	let signUpForm = $('<form>', {
+		id: 'register-form',
+		class: 'mui-form'
+	});
 
-	this.form.registerButton.on('click', function(event)
-	{
-		event.preventDefault();
-		this.addLoginForm();
-	}.bind(this));
+	let $shadowBoxContainer = $('<div>', {
+		css: {
+			width: '300px',
+			background: 'white',
+			padding: '15px',
+			margin: '10% auto 0'
+		},
+		html: signUpForm
+	});
 
-	this.form.submit(function(event)
-	{
-		event.preventDefault();
-
-		$('.alert').fadeOut(300, function()
-		{
-			$(this).remove();
-		});
-
-		var nickname 		= this.form.nickname.val();
-		var correo 			= this.form.email.val();
-		var clave 			= this.form.password.val();
-		var confirm 		= this.form.rePassword.val();
-		var token 			= MD5(correo + clave);
-
-		if(nickname.length < 2)
-		{
-			this.form.before($('<div class="alert alert-danger fade in alert-dismissable"><a href="#" class="close" data-dismiss="alert" aria-label="close" title="close">×</a><strong>Importante!</strong> El nombre no puede ser tan corto.</div>'));
-			this.form.nickname.val('').focus();
+	let $shadowbox = mui.overlay('on', {
+		'keyboard': true,
+		'static': false,
+		'onclose': () => {
+			console.log('Close!');
 		}
-		else if(!this.validateEmail(correo))
+	}, $shadowBoxContainer.get(0));
+
+	$('<legend>', {
+		html: 'Username'
+	}).appendTo(signUpForm);
+
+	let usernameContainer = $('<div>', {
+		class: 'mui-textfield',
+		html: '<label>Required Text Field</label>'
+	}).appendTo(signUpForm);
+
+	let usernameInput = $('<input>', {
+		type: 'text',
+		name: 'name',
+		required: true
+	}).prependTo(usernameContainer);
+
+	$('<legend>', {
+		html: 'Email Address'
+	}).appendTo(signUpForm);
+
+	let emailContainer = $('<div>', {
+		class: 'mui-textfield',
+		html: '<label>Required Text Field</label>'
+	}).appendTo(signUpForm);
+
+	let userAccountInput = $('<input>', {
+		id: 'user-account',
+		type: 'text',
+		name: 'email',
+		required: true
+	}).prependTo(emailContainer);
+
+	$('<legend>', {
+		html: 'Password'
+	}).appendTo(signUpForm);
+
+	let passContainer = $('<div>', {
+		class: 'mui-textfield',
+		html: '<label>Required Text Field</label>'
+	}).appendTo(signUpForm);
+
+	let userPasswordInput = $('<input>', {
+		type: 'password',
+		name: 'password',
+		required: true
+	}).prependTo(passContainer);
+
+	$('<legend>', {
+		html: 'Confirm Password'
+	}).appendTo(signUpForm);
+
+	let confirmPassContainer = $('<div>', {
+		class: 'mui-textfield',
+		html: '<label>Required Text Field</label>'
+	}).appendTo(signUpForm);
+
+	let userPasswordConfirmInput = $('<input>', {
+		type: 'password',
+		name: 'password',
+		required: true
+	}).prependTo(confirmPassContainer);
+
+	let rememberContainer = $('<div>', {
+		class: 'mui-checkbox',
+		html: '<label>Remember me</label>'
+	}).appendTo(signUpForm);
+
+	let rememberMe = $('<input>', {
+		id: 'remember-me',
+		type: 'checkbox',
+		value: ''
+	}).prependTo(rememberContainer);
+
+	let sendButton = $('<button>', {
+		type: 'submit',
+		class: 'mui-btn mui-btn--raised mui-btn--primary',
+		html: 'Register'
+	}).on('click', () => {
+		event.preventDefault();
+
+		let username 	= usernameInput.val();
+		let email 		= userAccountInput.val();
+		let password 	= userPasswordInput.val();
+		let confirm 	= userPasswordConfirmInput.val();
+		let remember 	= rememberMe.is(':checked');
+		let token 		= MD5(email + password);
+
+		if(username.length < 2)
 		{
-			this.form.before($('<div class="alert alert-danger fade in alert-dismissable"><a href="#" class="close" data-dismiss="alert" aria-label="close" title="close">×</a><strong>Importante!</strong> Debes usar un correo válido.</div>'));
-			this.form.email.val('').focus();
+			usernameInput.val('').focus();
 		}
-		else if(clave != confirm)
+		else if(!this.validateEmail(email))
 		{
-			this.form.before($('<div class="alert alert-danger fade in alert-dismissable"><a href="#" class="close" data-dismiss="alert" aria-label="close" title="close">×</a><strong>Importante!</strong> Las contraseñas deben ser iguales.</div>'));
-			this.form.password.val('').focus();
-			this.form.rePassword.val('');
+			userAccountInput.val('').focus();
+		}
+		else if(password != confirm)
+		{
+			userPasswordInput.val('').focus();
+			userPasswordConfirmInput.val('');
 		}
 		else
 		{
-			this.rememberUser = $('#remember').is(':checked');
-
-			SocketManager.emit('register', {
-				nickname : nickname,
-				email : correo,
-				token : token
+			SocketManager.emit('user-register', {
+				name : username,
+				email : email,
+				token : token,
+				remember : remember
 			});
 		}
-		
-	}.bind(this));
+	}).appendTo(signUpForm);
 
-	this.form.fadeIn(300);
+	let cancelButton = $('<button>', {
+		type: 'button',
+		class: 'mui-btn mui-btn--raised',
+		html: "Cancel"
+	}).on('click', (event) => {
+		event.preventDefault();
+		mui.overlay('off');
+	}).appendTo(signUpForm);
 };
 
 UserManager.prototype.onLoginHandler = function(data)
@@ -143,27 +317,32 @@ UserManager.prototype.onLoginHandler = function(data)
 	console.log('onLoginHandler();');
 	if(data.success)
 	{
-		if(this.rememberUser) document.cookie = "token=" + data.success;
+		mui.overlay('off');
 
-		if(this.form)
+		let $UserOptions = $('#cashflow .user-options');
+			$UserOptions.empty();
+
+		let $profileButton = $('<button>', {
+			class: 'mui-btn mui-btn--flat mui-btn--primary',
+	        html: data.success.name
+		}).appendTo($UserOptions);
+
+		$profileButton.on('click', (event) => {
+			event. preventDefault();
+		});
+
+		if(data.success.remember)
 		{
-			this.form.fadeOut(300, function()
-			{
-				this.form.remove();
-			}.bind(this));
+			this.setCookie('token', data.success.name + ':' + data.success.token);
 		}
-
-		ProjectManager.addUserInterface();
+		else
+		{
+			this.setCookie('token', '', -1);
+		}
 	}
 	else
 	{
-		document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-		$('.register').remove();
-		var error = $('<div>', { class: 'alert alert-danger fade in alert-dismissable register' });
-    		error.append($('<a>', { class: 'close', 'data-dismiss': 'alert', 'aria-label': 'close', title: 'close', html: 'x' }));
-    		error.append($('<strong>', { html: 'Error. ' }));
-    		error.append(data.error);
-    		error.appendTo($('#alerts'));
+		$('#user-account').val('');
 	}
 };
 
@@ -172,44 +351,32 @@ UserManager.prototype.onRegisterHandler = function(data)
 	//console.log('onRegisterHandler();');
 	if(data.success)
 	{
-		if(this.rememberUser)
+		mui.overlay('off');
+
+		let $UserOptions = $('#cashflow .user-options');
+			$UserOptions.empty();
+
+		let $profileButton = $('<button>', {
+			class: 'mui-btn mui-btn--flat mui-btn--primary',
+	        html: data.success.name
+		}).appendTo($UserOptions);
+
+		$profileButton.on('click', (event) => {
+			event. preventDefault();
+		});
+
+		if(data.success.remember)
 		{
-			document.cookie = "token=" + data.success;
-
-			if(this.form)
-			{
-				this.form.fadeOut(300, function()
-				{
-					this.form.remove();
-				}.bind(this));
-			}
-
-			ProjectManager.addUserInterface();
+			this.setCookie('token', data.success.name + ':' + data.success.token);
 		}
-
-		var success = $('<div>', { class: 'alert alert-success fade in alert-dismissable' });
-    		success.append($('<a>', { class: 'close', 'data-dismiss': 'alert', 'aria-label': 'close', title: 'close', html: 'x' }));
-    		success.append($('<strong>', { html: 'Bienvenido!' }));
-    		success.append(' Ya estás registrado.');
-    		success.appendTo($('#alerts'));
-
-    		setTimeout(function()
-    		{
-    			success.hide(300, function()
-    			{
-    				$(this).remove();
-    			});
-    		},
-    		5000);
+		else
+		{
+			this.setCookie('token', '', -1);
+		}
 	}
 	else
 	{
-		$('.register').remove();
-		var error = $('<div>', { class: 'alert alert-danger fade in alert-dismissable register' });
-    		error.append($('<a>', { class: 'close', 'data-dismiss': 'alert', 'aria-label': 'close', title: 'close', html: 'x' }));
-    		error.append($('<strong>', { html: 'Error. ' }));
-    		error.append(data.error);
-    		error.appendTo($('#alerts'));
+		$('#user-account').val('');
 	}
 };
 
@@ -217,7 +384,7 @@ UserManager.prototype.validateEmail = function(email)
 {
     var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
     return re.test(email);
-};*/
+};
 
 exports.getInstance = function()
 {

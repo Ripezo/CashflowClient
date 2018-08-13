@@ -14,5 +14,8 @@
     "browserify": "^16.2.2",
     "socket.io-client": "^2.1.1",
     "watchify": "^3.11.0"
+  },
+  "dependencies": {
+    "md5-js": "0.0.3"
   }
 }
