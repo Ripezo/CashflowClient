@@ -1,6 +1,11 @@
-var UserManager 	= require('./admin/UserManager').getInstance();
+let SocketManager 	= require('./admin/SocketManager').getInstance();
+let UserManager 	= require('./admin/UserManager').getInstance();
+let GameManager		= require('./admin/GameManager').getInstance();
 	
 
 $(() => {
-	UserManager.addEventListeners();
+	SocketManager.on('connect', () => {
+		UserManager.init();
+		GameManager.init();
+	});
 });

@@ -4,6 +4,10 @@ var instance;
 
 var SocketManager = function()
 {
+	let _this = this;
+
+	this.onConnectHandler = function() {};
+
 	this.io = io(Settings.hostName + '/socket', { 'transports': ['polling']});
 	this.io.on('connect', function(event)
 	{
@@ -28,6 +32,8 @@ var SocketManager = function()
 	    		},
 	    		5000);
 		}*/
+
+		_this.onConnectHandler();
 	});
 
 	this.io.on('disconnect', function(event)
@@ -67,6 +73,12 @@ var SocketManager = function()
 	});
 
 	return this.io;
+};
+
+SocketManager.prototype.on = function(eventType, callbackFunction) {
+	
+	if(eventType == 'connect') this.onConnectHandler = callbackFunction;
+
 };
 
 exports.getInstance = function()

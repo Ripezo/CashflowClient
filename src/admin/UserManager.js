@@ -5,12 +5,12 @@ let MD5 			= require('md5-js');
 
 let UserManager = function()
 {
-	this.rememberUser = false;
+	
 };
 
-UserManager.prototype.addEventListeners = function()
+UserManager.prototype.init = function()
 {
-	console.log('UserManager.addEventListeners();');
+	console.log('UserManager.init();');
 	SocketManager.on('whois', this.onWhoIsHandler.bind(this));
 	SocketManager.on('login', this.onLoginHandler.bind(this));
 	SocketManager.on('register', this.onRegisterHandler.bind(this));
@@ -110,6 +110,7 @@ UserManager.prototype.addLoginForm = function()
 	}).appendTo(signInForm);
 
 	let userAccountInput = $('<input>', {
+		id: 'user-account',
 		type: 'text',
 		name: 'email',
 		required: true
@@ -125,6 +126,7 @@ UserManager.prototype.addLoginForm = function()
 	}).appendTo(signInForm);
 
 	let userPasswordInput = $('<input>', {
+		id: 'user-password',
 		type: 'password',
 		required: true
 	}).prependTo(passContainer);
@@ -343,6 +345,7 @@ UserManager.prototype.onLoginHandler = function(data)
 	else
 	{
 		$('#user-account').val('');
+		$('#user-password').val('');
 	}
 };
 
